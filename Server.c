@@ -9,6 +9,7 @@
 
 #define path "/home/yulya/kt/FIFO.fifo"
 #define part_path "/home/yulya/kt/"
+#define N 50
 
 int main(int argc, char * argv[]){
 
@@ -18,11 +19,12 @@ int main(int argc, char * argv[]){
 			exit (errno);
 		}
 	}
+
 	int fd_r, fd_w, fd;
 	char *data;
-	data = (char *) malloc (50*sizeof(char));
+	data = (char *) malloc (N*sizeof(char));
 	char *file;
-	file = (char *) malloc (50*sizeof(char));
+	file = (char *) malloc (N*sizeof(char));
 
 	struct stat *about_file = (struct stat *) malloc (sizeof(struct stat));
 
@@ -30,12 +32,12 @@ int main(int argc, char * argv[]){
 
 		fd_r = open (path, O_RDONLY); //блокируется, пока фифо не откроется для записи
 		if ( fd_r == -1 ){
-			printf("open fifo error\n");
+			printf("open fifo1 error\n");
 			exit (errno);
 		}
 		
-		if( read(fd_r, data, 50)  == -1){
-			printf("read from fifo error\n");
+		if( read(fd_r, data, N)  == -1){
+			printf("read from fifo2 error\n");
 			exit (errno);
 		}
 		close(fd_r);
@@ -43,10 +45,8 @@ int main(int argc, char * argv[]){
 		file = strchr (data, ';');
 		*file = '\0';
 		file++;
-		char new_path[50];
+		char new_path[N];
 		sprintf(new_path, "%sclient%s.fifo",part_path, data);
-		/*printf("%s\n", file);
-		printf("%s\n", new_path);*/
 
 		fd = open(file, O_RDONLY);
 		if ( fd == -1 ){
@@ -65,8 +65,7 @@ int main(int argc, char * argv[]){
 			exit(errno);
 		}
 		long int file_size = about_file->st_size;
-		char * buf;
-		buf = (char *) malloc (file_size * sizeof (char));
+		char * buf = (char *) malloc (file_size * sizeof (char));
 		if( read(fd, buf, file_size)  == -1){
 			printf("read from file error\n");
 			exit (errno);
@@ -79,7 +78,11 @@ int main(int argc, char * argv[]){
 			exit (errno);
 		}
 		close(fd_w);
+		free(buf);
 	
 	}
+	free(data);
+	free(file);
+	free(about_file);
 }
 
