@@ -7,8 +7,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#define path "/home/yulya/kt/FIFO.fifo"
-#define part_path "/home/yulya/kt/"
 #define page_size 4096
 #define N 50
 
@@ -18,6 +16,15 @@ int main(int argc, char * argv[]){
 		printf("arguments error\n");
 		exit(-1);
 	}
+
+	char dir[N];
+	if (getcwd(dir, N) == NULL) {
+		printf("getcwd error\n");
+			exit(errno);
+	}
+	char path[N];
+	
+	sprintf(path, "%s/FIFO.fifo", dir);
 
 	char *data = (char *) malloc (N*sizeof(char));
 	char *file = (char *) malloc (N*sizeof(char));
@@ -40,7 +47,7 @@ int main(int argc, char * argv[]){
 	close(fd_w);
 
 	char new_path[N];
-	sprintf(new_path, "%sclient%d.fifo", part_path, id);
+	sprintf(new_path, "%s/client%d.fifo", dir, id);
 
 	if ( mkfifo (new_path, 0600) == -1){
 		if (errno != EEXIST){
