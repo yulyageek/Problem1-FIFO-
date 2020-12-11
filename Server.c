@@ -126,7 +126,8 @@ int main(int argc, char * argv[]){
 				printf("read from file error\n");
 				exit (errno);
 			}
-		int wr = write(fd_cl, buf, file_size%page_size);
+		*(buf+rd) = '\0';
+		int wr = write(fd_cl, buf, file_size%page_size+1);
 			if (wr == -1){
 				printf("write in fifo error\n");
 				exit (errno);
