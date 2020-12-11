@@ -8,25 +8,38 @@
 #include <string.h>
 #include <signal.h>
 
-#define path "/home/yulya/kt/FIFO.fifo"
-#define part_path "/home/yulya/kt/"
 #define page_size 4096
 #define N 50
 
 void *p[4];
+char dir[N];
 
 void my_handler(int sig){
 	free(p[0]);
 	free(p[1]);
 	free(p[2]);
 	free(p[3]);
+	sprintf(dir, "%s/FIFO.fifo", dir);
+	if (remove (dir) == -1){
+		printf("remove error");
+		exit(errno);
+		}	
 	exit(0);
+	
 }
 
 
 int main(int argc, char * argv[]){
 
 	signal(SIGINT, my_handler);
+	
+	if (getcwd(dir, N) == NULL) {
+		printf("getcwd error\n");
+			exit(errno);
+	}
+	char path[N];
+	
+	sprintf(path, "%s/FIFO.fifo", dir);
 
 	if ( mkfifo (path, 0600) == -1){
 		if (errno != EEXIST){
@@ -67,7 +80,7 @@ int main(int argc, char * argv[]){
 		*file = '\0';
 		file++;
 		char new_path[N];
-		sprintf(new_path, "%sclient%s.fifo",part_path, data);
+		sprintf(new_path, "%s/client%s.fifo",dir, data);
 
 		fd = open(file, O_RDONLY);
 		if ( fd == -1 ){
@@ -117,7 +130,12 @@ int main(int argc, char * argv[]){
 			if (wr == -1){
 				printf("write in fifo error\n");
 				exit (errno);
-			}		
+			}
+
+		if (remove (new_path) == -1){
+			printf("remove error");
+			exit(errno);
+		}		
 		
 	
 	}
