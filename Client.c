@@ -9,7 +9,7 @@
 
 #define path "/home/yulya/kt/FIFO.fifo"
 #define part_path "/home/yulya/kt/"
-#define max_file_size 4096
+#define page_size 4096
 #define N 50
 
 int main(int argc, char * argv[]){
@@ -21,7 +21,7 @@ int main(int argc, char * argv[]){
 
 	char *data = (char *) malloc (N*sizeof(char));
 	char *file = (char *) malloc (N*sizeof(char));
-	char * text = (char *) malloc (max_file_size * sizeof (char));
+	char * text = (char *) malloc (page_size * sizeof (char));
 	int fd_r, fd_w;
 
 	fd_w = open (path, O_WRONLY);
@@ -55,12 +55,16 @@ int main(int argc, char * argv[]){
 		exit (errno);
 	}
 
-	if( read(fd_r, text, max_file_size)  == -1){
-		printf("read from fifo error\n");
-		exit (errno);
+	while(1){
+		int rd =  read(fd_r, text, page_size);
+		if (rd == -1){
+			printf("write in fifo error\n");
+			exit (errno);
+		}
+		printf("%s", text);
+		if (rd != page_size)  break;
 	}
 	close(fd_r);
-	printf("%s", text);
 	free(data);
 	free(file);
 	free(text);
