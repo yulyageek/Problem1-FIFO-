@@ -6,12 +6,27 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <signal.h>
 
 #define path "/home/yulya/kt/FIFO.fifo"
 #define part_path "/home/yulya/kt/"
+#define page_size 4096
 #define N 50
 
+void *p[4];
+
+void my_handler(int sig){
+	free(p[0]);
+	free(p[1]);
+	free(p[2]);
+	free(p[3]);
+	exit(0);
+}
+
+
 int main(int argc, char * argv[]){
+
+	signal(SIGINT, my_handler);
 
 	if ( mkfifo (path, 0600) == -1){
 		if (errno != EEXIST){
@@ -20,28 +35,27 @@ int main(int argc, char * argv[]){
 		}
 	}
 
-	int fd_r, fd_w, fd;
-	char *data;
-	data = (char *) malloc (N*sizeof(char));
-	char *file;
-	file = (char *) malloc (N*sizeof(char));
-
+	int fd_ser, fd_cl, fd;
+	char *data = (char *) malloc (N*sizeof(char));
+	p[0] = (void *) data; 
+	char *file = (char *) malloc (N*sizeof(char));
+	p[1] = (void *) file; 
 	struct stat *about_file = (struct stat *) malloc (sizeof(struct stat));
-
-	while (1){
-
-		fd_r = open (path, O_RDONLY); //блокируется, пока фифо не откроется для записи
-		if ( fd_r == -1 ){
+	p[2] = (void *) about_file; 
+	fd_ser = open (path, O_RDWR);
+		if ( fd_ser == -1 ){
 			printf("open fifo1 error\n");
 			exit (errno);
 		}
-		
-		if( read(fd_r, data, N)  == -1){
-			printf("read from fifo2 error\n");
+
+	while (1){
+
+		if( read(fd_ser, data, N)  == -1){
+			printf("%s\n", data);
+			printf("read from fifo error\n");
 			exit (errno);
-		}
-		close(fd_r);
-		
+		}	
+
 		file = strchr (data, ';');
 		*file = '\0';
 		file++;
@@ -59,25 +73,46 @@ int main(int argc, char * argv[]){
 				exit (errno);
 			}
 		}
+	
+		if ( fd_ser == -1 ){
+			printf("open fifo error\n");
+			exit (errno);
+		}
 
 		if ( stat(file, about_file) == -1){
 			printf("stat error\n");
 			exit(errno);
 		}
 		long int file_size = about_file->st_size;
+		int i;
 		char * buf = (char *) malloc (file_size * sizeof (char));
-		if( read(fd, buf, file_size)  == -1){
-			printf("read from file error\n");
-			exit (errno);
+		p[3] = (void *) buf; 
+		
+		fd_cl = open(new_path, O_WRONLY);		
+		for ( i = 0; i < file_size / page_size; i++ ){
+
+			int rd = read(fd, buf, page_size);
+			if( rd  == -1){
+				printf("read from file error\n");
+				exit (errno);
+			}	
+			int wr = write(fd_cl, buf, page_size);
+			if (wr == -1){
+				printf("write in fifo error\n");
+				exit (errno);
+			}			
 		}
-		close(fd);
-		fd_w = open(new_path, O_WRONLY);
-		sleep(10);
-		if ( write(fd_w, buf, file_size) == -1){
-			printf("write in fifo error\n");
-			exit (errno);
-		}
-		close(fd_w);
+		int rd = read(fd, buf, file_size%page_size);
+			if( rd  == -1){
+				printf("read from file error\n");
+				exit (errno);
+			}
+		int wr = write(fd_cl, buf, file_size%page_size);
+			if (wr == -1){
+				printf("write in fifo error\n");
+				exit (errno);
+			}		
+			
 		free(buf);
 	
 	}
