@@ -42,6 +42,13 @@ int main(int argc, char * argv[]){
 	p[1] = (void *) file; 
 	struct stat *about_file = (struct stat *) malloc (sizeof(struct stat));
 	p[2] = (void *) about_file; 
+	char * buf;
+	buf = (char *) malloc (page_size * sizeof (char));
+	if (buf == NULL){
+		printf("buf malloc error\n");
+		exit(errno);
+	}
+	p[3] = (void *) buf;
 	fd_ser = open (path, O_RDWR);
 		if ( fd_ser == -1 ){
 			printf("open fifo1 error\n");
@@ -85,8 +92,6 @@ int main(int argc, char * argv[]){
 		}
 		long int file_size = about_file->st_size;
 		int i;
-		char * buf = (char *) malloc (file_size * sizeof (char));
-		p[3] = (void *) buf; 
 		
 		fd_cl = open(new_path, O_WRONLY);		
 		for ( i = 0; i < file_size / page_size; i++ ){
@@ -102,6 +107,7 @@ int main(int argc, char * argv[]){
 				exit (errno);
 			}			
 		}
+
 		int rd = read(fd, buf, file_size%page_size);
 			if( rd  == -1){
 				printf("read from file error\n");
@@ -112,12 +118,8 @@ int main(int argc, char * argv[]){
 				printf("write in fifo error\n");
 				exit (errno);
 			}		
-			
-		free(buf);
+		
 	
 	}
-	free(data);
-	free(file);
-	free(about_file);
 }
 
