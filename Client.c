@@ -8,7 +8,7 @@
 #include <string.h>
 
 #define page_size 4096
-#define N 50
+#define N 256
 
 int main(int argc, char * argv[]){
 
@@ -20,7 +20,7 @@ int main(int argc, char * argv[]){
 	char dir[N];
 	if (getcwd(dir, N) == NULL) {
 		printf("getcwd error\n");
-			exit(errno);
+		exit(errno);
 	}
 	char path[N];
 	
@@ -68,8 +68,13 @@ int main(int argc, char * argv[]){
 			printf("write in fifo error\n");
 			exit (errno);
 		}
-		printf("%s", text);
-		if (rd != page_size)  break;
+		
+		if ((write(1, text, rd)) == -1) {
+			printf("write error\n");
+			exit(errno);
+		}
+		if (rd < page_size)
+			break;
 	}
 	close(fd_r);
 	free(data);
