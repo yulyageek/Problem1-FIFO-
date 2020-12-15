@@ -9,7 +9,7 @@
 #include <signal.h>
 
 #define page_size 4096
-#define N 50
+#define N 256
 
 void *p[4];
 char dir[N];
@@ -107,31 +107,21 @@ int main(int argc, char * argv[]){
 		int i;
 		
 		fd_cl = open(new_path, O_WRONLY);		
-		for ( i = 0; i < file_size / page_size; i++ ){
-
+		while (1){
 			int rd = read(fd, buf, page_size);
 			if( rd  == -1){
 				printf("read from file error\n");
 				exit (errno);
 			}	
-			int wr = write(fd_cl, buf, page_size);
-			if (wr == -1){
+			if (write(fd_cl, buf, rd) == -1){
 				printf("write in fifo error\n");
 				exit (errno);
+			}
+			if( rd < page_size){
+				printf("reading end\n");
+				break;
 			}			
 		}
-
-		int rd = read(fd, buf, file_size%page_size);
-			if( rd  == -1){
-				printf("read from file error\n");
-				exit (errno);
-			}
-		*(buf+rd) = '\0';
-		int wr = write(fd_cl, buf, file_size%page_size+1);
-			if (wr == -1){
-				printf("write in fifo error\n");
-				exit (errno);
-			}
 
 		if (remove (new_path) == -1){
 			printf("remove error");
