@@ -93,11 +93,6 @@ int main(int argc, char * argv[]){
 				exit (errno);
 			}
 		}
-	
-		if ( fd_ser == -1 ){
-			printf("open fifo error\n");
-			exit (errno);
-		}
 
 		if ( stat(file, about_file) == -1){
 			printf("stat error\n");
@@ -106,7 +101,11 @@ int main(int argc, char * argv[]){
 		long int file_size = about_file->st_size;
 		int i;
 		
-		fd_cl = open(new_path, O_WRONLY);		
+		fd_cl = open(new_path, O_WRONLY);
+		if ( fd_cl == -1 ){
+			printf("open fifo error\n");
+			exit (errno);
+		}
 		while (1){
 			int rd = read(fd, buf, page_size);
 			if( rd  == -1){
